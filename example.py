@@ -7,6 +7,7 @@ resources = [
     ALB(
         "web alb", connections=300, duration=120, bandwidth=1000, requests=50, rules=60
     ),
+    CLB("web clb", count=1, bandwidth=1000),
 ]
 
 calc = Calculator("us-west-2")

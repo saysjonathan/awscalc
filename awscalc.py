@@ -129,6 +129,32 @@ class ELBV2(Resource):
         return (hrs + (lcu * max_lcu)) * hours
 
 
+class CLB(Resource):
+    _fields = {
+        "bandwidth": (None, None, True),
+        "code": ("serviceCode", "AmazonEC2", False),
+        "count": (None, 1, False),
+        "family": ("productFamily", "Load Balancer", False),
+        "region": ("location", None, False),
+        "term": (None, "OnDemand", False),
+    }
+
+    def price(self, client, region, hours):
+        pricelist = self._pricelist(client, region, 2)
+        hrs = 0.00
+        lcu = 0.00
+
+        for term in pricelist:
+            t = json.loads(term)["terms"][self.term.value]
+            price = self._terms(t)
+            if price["unit"] == "Hrs":
+                hrs = self._ppu(price)
+            else:
+                bw = self._ppu(price)
+
+        return (hrs * hours) + (bw * self.bandwidth.value)
+
+
 class NLB(ELBV2):
     _fields = {
         "bandwidth": (None, None, True),
@@ -177,7 +203,6 @@ class ALB(ELBV2):
         active_lcu = (self.connections.value * self.duration.value) / active
         bw_lcu = (self.bandwidth.value / hours) / bandwidth
         rule_lcu = (self.requests.value * (self.rules.value - free_rules)) / rule_evals
-        print(new_lcu, active_lcu, bw_lcu, rule_lcu)
         return max(new_lcu, active_lcu, bw_lcu, rule_lcu)
 
 
