@@ -62,11 +62,22 @@ class Resource:
 
         return filters
 
-    def _pricelist(self, client, region):
+    def _pricelist(self, client, region, matches=1):
         response = client.get_products(
             ServiceCode=self.code.value, Filters=self.filters(region)
         )
-        return response["PriceList"]
+
+        pricelist = response["PriceList"]
+        if len(pricelist) < matches:
+            raise ValueError(
+                'Resource: "{}": No matches for specified options'.format(self.tag)
+            )
+        elif len(pricelist) > matches:
+            raise ValueError(
+                'Resource "{}": Too many matches'.format(self.tag)
+            )
+        else:
+            return pricelist
 
     def _terms(self, term):
         return next(iter(next(iter(next(iter(term.values())).values())).values()))
@@ -108,7 +119,7 @@ class NLB(Resource):
     }
 
     def price(self, client, region, hours):
-        pricelist = self._pricelist(client, region)
+        pricelist = self._pricelist(client, region, 1)
 
         hrs = 0.00
         lcu = 0.00
