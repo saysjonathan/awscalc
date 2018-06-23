@@ -206,6 +206,25 @@ class ALB(ELBV2):
         return max(new_lcu, active_lcu, bw_lcu, rule_lcu)
 
 
+class EBS(Resource):
+    _fields = {
+        "code": ("serviceCode", "AmazonEC2", False),
+        "count": (None, 1, False),
+        "family": ("productFamily", "Storage", False),
+        "region": ("location", None, False),
+        "size": (None, None, True),
+        "term": (None, "OnDemand", False),
+        "type": ("volumeType", "General Purpose", False),
+    }
+
+    def price(self, client, region, hours):
+        pricelist = self._pricelist(client, region)
+        term = json.loads(pricelist[0])["terms"][self.term.value]
+        price = self._terms(term)
+        print(self._ppu(price))
+        return self._ppu(price) * self.size.value * self.count.value
+
+
 class Calculator:
     def __init__(self, region, hours=732):
         self.resources = {}
