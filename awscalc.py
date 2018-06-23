@@ -119,7 +119,7 @@ class NLB(Resource):
     }
 
     def price(self, client, region, hours):
-        pricelist = self._pricelist(client, region, 1)
+        pricelist = self._pricelist(client, region, 2)
 
         hrs = 0.00
         lcu = 0.00
