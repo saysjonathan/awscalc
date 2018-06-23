@@ -115,18 +115,7 @@ class EC2(Resource):
         return self._ppu(price) * hours * self.count.value
 
 
-class NLB(Resource):
-    _fields = {
-        "bandwidth": (None, None, True),
-        "code": ("serviceCode", "AmazonEC2", False),
-        "connections": (None, None, True),
-        "duration": (None, None, True),
-        "count": (None, None, True),
-        "family": ("productFamily", "Load Balancer-Network", False),
-        "region": ("location", None, False),
-        "term": (None, "OnDemand", False),
-    }
-
+class ELBV2(Resource):
     def price(self, client, region, hours):
         pricelist = self._pricelist(client, region, 2)
 
@@ -141,16 +130,60 @@ class NLB(Resource):
             else:
                 lcu = self._ppu(price)
 
+        max_lcu = self._max_lcu(hours)
+        return (hrs + (lcu * max_lcu)) * hours
+
+
+class NLB(ELBV2):
+    _fields = {
+        "bandwidth": (None, None, True),
+        "code": ("serviceCode", "AmazonEC2", False),
+        "connections": (None, None, True),
+        "duration": (None, None, True),
+        "count": (None, 1, False),
+        "family": ("productFamily", "Load Balancer-Network", False),
+        "region": ("location", None, False),
+        "term": (None, "OnDemand", False),
+    }
+
+    def _max_lcu(self, hours):
         new = 800
         active = 100000
         bandwidth = 1
 
         new_lcu = self.connections.value / new
-        active_lcu = (self.connections.value * self.duration.value) / 100000
+        active_lcu = (self.connections.value * self.duration.value) / active
         bw_lcu = (self.bandwidth.value / hours) / bandwidth
-        max_lcu = max(new_lcu, active_lcu, bw_lcu)
+        return max(new_lcu, active_lcu, bw_lcu)
 
-        return (hrs * hours) + (lcu * max_lcu * hours)
+
+class ALB(ELBV2):
+    _fields = {
+        "bandwidth": (None, None, True),
+        "code": ("serviceCode", "AmazonEC2", False),
+        "connections": (None, None, True),
+        "duration": (None, None, True),
+        "count": (None, 1, False),
+        "family": ("productFamily", "Load Balancer-Network", False),
+        "region": ("location", None, False),
+        "requests": (None, None, True),
+        "rules": (None, None, True),
+        "term": (None, "OnDemand", False),
+    }
+
+    def _max_lcu(self, hours):
+        new = 25
+        active = 3000
+        bandwidth = 1
+        rule_evals = 1000
+        free_rules = 10
+
+        new_lcu = self.connections.value / new
+        active_lcu = (self.connections.value * self.duration.value) / active
+        bw_lcu = (self.bandwidth.value / hours) / bandwidth
+        rule_lcu = (self.requests.value * (self.rules.value - free_rules)) / rule_evals
+        print(new_lcu, active_lcu, bw_lcu, rule_lcu)
+        return max(new_lcu, active_lcu, bw_lcu, rule_lcu)
 
 
 class Calculator:
