@@ -51,10 +51,7 @@ class Resource:
         for name in self._fields.keys():
             field = getattr(self, name)
             if field.req and not field.value:
-                raise ValueError(
-                    "missing required field: {}".format(name)
-                )
-
+                raise ValueError("missing required field: {}".format(name))
 
     def filters(self, region):
         if self.region.value == None:
@@ -82,9 +79,7 @@ class Resource:
                 'Resource: "{}": No matches for specified options'.format(self.tag)
             )
         elif len(pricelist) > matches:
-            raise ValueError(
-                'Resource "{}": Too many matches'.format(self.tag)
-            )
+            raise ValueError('Resource "{}": Too many matches'.format(self.tag))
         else:
             return pricelist
 
