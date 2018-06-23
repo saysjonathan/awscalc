@@ -37,6 +37,7 @@ class Field:
 class Resource:
     def __init__(self, tag, **kwargs):
         self.tag = tag
+
         for name, field in self._fields.items():
             setattr(self, name, Field(*field))
 
@@ -46,6 +47,14 @@ class Resource:
                 field.value = v
             else:
                 raise ValueError("unknown field: {}".format(k))
+
+        for name in self._fields.keys():
+            field = getattr(self, name)
+            if field.req and not field.value:
+                raise ValueError(
+                    "missing required field: {}".format(name)
+                )
+
 
     def filters(self, region):
         if self.region.value == None:
