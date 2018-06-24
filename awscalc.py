@@ -221,8 +221,26 @@ class EBS(Resource):
         pricelist = self._pricelist(client, region)
         term = json.loads(pricelist[0])["terms"][self.term.value]
         price = self._terms(term)
-        print(self._ppu(price))
         return self._ppu(price) * self.size.value * self.count.value
+
+
+class RDS(Resource):
+    _fields = {
+        "code": ("serviceCode", "AmazonRDS", False),
+        "count": (None, 1, False),
+        "deployment": ("deploymentOption", "Single-AZ", False),
+        "engine": ("databaseEngine", "MySQL", False),
+        "family": ("productFamily", "Database Instance", False),
+        "region": ("location", None, False),
+        "size": ("instanceType", None, True),
+        "term": (None, "OnDemand", False),
+    }
+
+    def price(self, client, region, hours):
+        pricelist = self._pricelist(client, region)
+        term = json.loads(pricelist[0])["terms"][self.term.value]
+        price = self._terms(term)
+        return self._ppu(price) * hours * self.count.value
 
 
 class Calculator:
