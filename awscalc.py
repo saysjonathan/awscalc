@@ -1,7 +1,6 @@
 import json
 import boto3
 
-
 regions = {
     "us-east-1": "US East (N. Virigina)",
     "us-east-2": "US East (Ohio)",
@@ -12,26 +11,28 @@ regions = {
 
 class Field:
     def __init__(self, attr, default, req):
-        self.attr = attr
-        self.default = default
-        self.req = req
+        self._attr = attr
+        self._default = default
+        self._req = req
         self._value = None
 
     @property
     def value(self):
-        return self._value or self.default
+        return self._value or self._default
 
     @value.setter
     def value(self, val):
         self._value = val
 
+    def valid(self):
+        if not self.value and self._req:
+            return False
+        else:
+            return True
+
     def to_filter(self):
-        if self.attr is not None:
-            return {
-                "Type": "TERM_MATCH",
-                "Field": self.attr,
-                "Value": self.value or self.default,
-            }
+        if self._attr is not None:
+            return {"Type": "TERM_MATCH", "Field": self._attr, "Value": self.value}
 
 
 class Resource:
@@ -50,7 +51,7 @@ class Resource:
 
         for name in self._fields.keys():
             field = getattr(self, name)
-            if field.req and not field.value:
+            if not field.valid():
                 raise ValueError("missing required field: {}".format(name))
 
     def filters(self, region):
