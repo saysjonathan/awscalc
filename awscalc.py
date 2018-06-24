@@ -243,6 +243,23 @@ class RDS(Resource):
         return self._ppu(price) * hours * self.count.value
 
 
+class S3(Resource):
+    _fields = {
+        "code": ("serviceCode", "AmazonS3", False),
+        "family": ("productFamily", "Storage", False),
+        "region": ("location", None, False),
+        "size": (None, None, True),
+        "term": (None, "OnDemand", False),
+        "type": ("volumeType", "Standard", False),
+    }
+
+    def price(self, client, region, hours):
+        pricelist = self._pricelist(client, region)
+        term = json.loads(pricelist[0])["terms"][self.term.value]
+        price = self._terms(term)
+        return self._ppu(price) * self.size.value
+
+
 class Calculator:
     def __init__(self, region, hours=732):
         self.resources = {}

@@ -10,6 +10,7 @@ resources = [
     EBS("nfs ebs", size=1000),
     RDS("rds", count=2, size="db.r4.large", engine="Aurora MySQL"),
     EBS("rds ebs", count=2, size=100),
+    S3("assets", size=500),
 ]
 
 calc = Calculator("us-west-2")
